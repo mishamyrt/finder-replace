@@ -70,14 +70,17 @@ built-in `GITHUB_TOKEN`.
 
 ### Publish
 
-1. Update `VERSION` in the Makefile.
-2. Run the checks above, commit, and push the changes.
-3. Push a tag matching that version exactly. For example, for `0.1.0`:
+1. Run the checks above and commit your code changes.
+2. Update `VERSION` in the Makefile.
+3. Publish:
 
    ```sh
-   git tag v0.1.0
-   git push origin v0.1.0
+   make publish
    ```
+
+This stages and commits only the Makefile with the message
+`chore: release vX.Y.Z`, creates tag `vX.Y.Z`, and atomically pushes the current
+branch and tag to `origin`. Other staged files stay staged.
 
 The workflow verifies the version and publishes two archives:
 `finder-replace_vX.Y.Z_darwin_arm64.tar.gz` and
