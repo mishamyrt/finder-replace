@@ -50,7 +50,7 @@ def formula(version, repository, directory):
   def caveats
     <<~EOS
       No clicks are intercepted until ApplicationPath is configured, for example:
-        defaults write com.mishamyrt.finder-replace ApplicationPath -string "/Applications/Bloom.app"
+        defaults write co.myrt.finder-replace ApplicationPath -string "/Applications/Bloom.app"
       Start at login with `brew services start finder-replace` (without sudo).
       After changing settings or granting Accessibility access, run:
         brew services restart finder-replace

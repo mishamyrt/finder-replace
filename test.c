@@ -10,7 +10,7 @@ static CFTypeRef configured_path;
 static CFPropertyListRef fake_preference(CFStringRef key, CFStringRef app,
                                          CFStringRef user, CFStringRef host) {
     assert(CFEqual(key, CFSTR("ApplicationPath")));
-    assert(CFEqual(app, CFSTR("com.mishamyrt.finder-replace")));
+    assert(CFEqual(app, CFSTR("co.myrt.finder-replace")));
     assert(CFEqual(user, kCFPreferencesCurrentUser));
     assert(CFEqual(host, kCFPreferencesAnyHost));
     return configured_path ? CFRetain(configured_path) : NULL;

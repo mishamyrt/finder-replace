@@ -13,7 +13,7 @@ For example, with Bloom:
 
 ```sh
 brew install mishamyrt/tap/finder-replace
-defaults write com.mishamyrt.finder-replace ApplicationPath -string "/Applications/Bloom.app"
+defaults write co.myrt.finder-replace ApplicationPath -string "/Applications/Bloom.app"
 brew services start finder-replace
 ```
 
@@ -46,7 +46,7 @@ Paths with spaces work; `~` is not expanded. Settings are read at startup.
 To clear the setting:
 
 ```sh
-defaults delete com.mishamyrt.finder-replace ApplicationPath
+defaults delete co.myrt.finder-replace ApplicationPath
 brew services restart finder-replace
 ```
 

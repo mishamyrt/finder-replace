@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define PREFERENCES_DOMAIN CFSTR("com.mishamyrt.finder-replace")
+#define PREFERENCES_DOMAIN CFSTR("co.myrt.finder-replace")
 #define DOCK_PATH "/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock"
 #define AX_TIMEOUT_SECONDS 0.1f
 #define AX_SEARCH_BUDGET_NS UINT64_C(250000000)
