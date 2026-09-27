@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build and test
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          test "$(uname -m)" = "$EXPECTED_ARCH"
+          make test
+      - name: Check version and package
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          version="$(make -s version)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$GITHUB_REF_NAME" = "v$version"
+          mkdir -p dist
+          tar -C build -czf "$GITHUB_WORKSPACE/dist/finder-replace_${GITHUB_REF_NAME}_darwin_${ARCH}.tar.gz" finder-replace
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.arch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v7
+        with:
+          repository: mishamyrt/homebrew-tap
+          ref: main
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Publish release
+        run: |
+          (cd dist && sha256sum *.tar.gz > SHA256SUMS)
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS \
+              --verify-tag --draft --generate-notes --title "$GITHUB_REF_NAME"
+          fi
+          # On a rerun, use the existing release assets rather than replacing them.
+          gh release download "$GITHUB_REF_NAME" --dir published \
+            --pattern "finder-replace_${GITHUB_REF_NAME}_darwin_*.tar.gz" --pattern SHA256SUMS
+          (cd published && sha256sum -c SHA256SUMS)
+          python3 scripts/homebrew_formula.py "$(make -s version)" "$GITHUB_REPOSITORY" published \
+            > homebrew-tap/Formula/finder-replace.rb
+          if [ "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft)" = true ]; then
+            gh release edit "$GITHUB_REF_NAME" --draft=false
+          fi
+      - name: Update Homebrew tap
+        working-directory: homebrew-tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/finder-replace.rb
+          if git diff --cached --quiet; then
+            echo "Formula is already up to date"
+            exit 0
+          fi
+          git commit -m "chore: update finder-replace to ${GITHUB_REF_NAME}"
+          git pull --rebase origin main
+          git push origin HEAD:main

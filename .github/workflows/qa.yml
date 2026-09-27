@@ -1,0 +1,31 @@
+name: QA
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build and test
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          test "$(uname -m)" = "$EXPECTED_ARCH"
+          make test
