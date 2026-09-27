@@ -6,7 +6,7 @@ CFLAGS = -std=c11 -Os -Wall -Wextra -Werror -mmacosx-version-min=13.0
 LDLIBS = -framework ApplicationServices -framework CoreServices -framework CoreFoundation
 BIN = build/finder-replace
 
-.PHONY: all test version clean
+.PHONY: all test version publish clean
 all: $(BIN)
 
 $(BIN): finder-replace.c Makefile
@@ -23,6 +23,12 @@ build/test: test.c finder-replace.c Makefile
 
 version:
 	@printf '%s\n' '$(VERSION)'
+
+publish:
+	git add -- Makefile
+	git commit --only -m "chore: release v$(VERSION)" -- Makefile
+	git tag "v$(VERSION)"
+	git push --atomic origin HEAD "refs/tags/v$(VERSION)"
 
 clean:
 	rm -rf build
