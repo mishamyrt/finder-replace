@@ -7,8 +7,12 @@ static AXUIElementRef hit_element;
 static float last_timeout;
 static CFTypeRef configured_path;
 
-static CFPropertyListRef fake_preference(CFStringRef key, CFStringRef app,
-                                         CFStringRef user, CFStringRef host) {
+static CFPropertyListRef fake_preference(
+    CFStringRef key,
+    CFStringRef app,
+    CFStringRef user,
+    CFStringRef host
+) {
     assert(CFEqual(key, CFSTR("ApplicationPath")));
     assert(CFEqual(app, CFSTR("co.myrt.finder-replace")));
     assert(CFEqual(user, kCFPreferencesCurrentUser));
@@ -16,7 +20,8 @@ static CFPropertyListRef fake_preference(CFStringRef key, CFStringRef app,
     return configured_path ? CFRetain(configured_path) : NULL;
 }
 
-static AXError fake_hit_test(AXUIElementRef application, float x, float y, AXUIElementRef *out) {
+static AXError
+fake_hit_test(AXUIElementRef application, float x, float y, AXUIElementRef *out) {
     (void)application;
     (void)x;
     (void)y;
@@ -43,14 +48,15 @@ static AXError fake_timeout(AXUIElementRef element, float seconds) {
 #undef CFPreferencesCopyValue
 
 int main(void) {
-    char *args[] = { "finder-replace", "--help", NULL };
+    char *args[] = {"finder-replace", "--help", NULL};
     assert(app_main(2, args) == 0);
     args[1] = "--invalid";
     assert(app_main(2, args) == 2);
     args[1] = "--version";
     assert(app_main(2, args) == 0);
 
-    // No configuration must exit before asking for AX permissions or installing a tap.
+    // No configuration must exit before asking for AX permissions or installing a
+    // tap.
     assert(app_main(1, args) == 0 && tap == NULL);
     configured_path = CFSTR("");
     assert(app_main(1, args) == 0 && tap == NULL);
@@ -61,7 +67,8 @@ int main(void) {
     configured_path = NULL;
     assert(application_url(CFSTR("relative.app")) == NULL);
     assert(application_url(CFSTR("/Applications")) == NULL);
-    CFURLRef valid_app = application_url(CFSTR("/System/Library/CoreServices/Finder.app"));
+    CFURLRef valid_app =
+        application_url(CFSTR("/System/Library/CoreServices/Finder.app"));
     assert(valid_app != NULL);
     CFRelease(valid_app);
 
@@ -69,7 +76,8 @@ int main(void) {
     hit_element = AXUIElementCreateSystemWide();
     hit_errors[0] = kAXErrorCannotComplete;
     hit_errors[1] = kAXErrorSuccess;
-    uint64_t deadline = clock_gettime_nsec_np(CLOCK_UPTIME_RAW) + AX_SEARCH_BUDGET_NS;
+    uint64_t deadline =
+        clock_gettime_nsec_np(CLOCK_UPTIME_RAW) + AX_SEARCH_BUDGET_NS;
     AXUIElementRef recovered = element_at(CGPointZero, deadline);
     assert(recovered == hit_element && hit_calls == 2);
     assert(last_timeout > 0 && last_timeout <= AX_TIMEOUT_SECONDS);
@@ -108,16 +116,22 @@ int main(void) {
     assert(mouse_action(&active, kCGEventLeftMouseDown, false) == PASS);
     assert(mouse_action(&active, kCGEventLeftMouseUp, false) == PASS);
 
-    CFURLRef finder = CFURLCreateWithString(NULL,
-        CFSTR("file:///System/Library/CoreServices/Finder.app/"), NULL);
-    CFURLRef other = CFURLCreateWithString(NULL,
-        CFSTR("file:///Applications/Finder.app/"), NULL);
+    CFURLRef finder = CFURLCreateWithString(
+        NULL,
+        CFSTR("file:///System/Library/CoreServices/Finder.app/"),
+        NULL
+    );
+    CFURLRef other =
+        CFURLCreateWithString(NULL, CFSTR("file:///Applications/Finder.app/"), NULL);
     assert(finder_url(finder));
     assert(!finder_url(other));
     assert(!finder_url(NULL));
     assert(!finder_url(CFSTR("Finder")));
     CFRelease(finder);
     CFRelease(other);
-    puts("OK: AX retry and deadline, click pairing, drag, double click, recovery, Finder URL");
+    puts(
+        "OK: AX retry and deadline, click pairing, drag, double click, recovery, "
+        "Finder URL"
+    );
     return 0;
 }
