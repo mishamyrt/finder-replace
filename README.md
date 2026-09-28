@@ -1,4 +1,17 @@
-# Finder Replace
+<p align="center">
+    <img src="./assets/logo.svg" width="200px" />
+</p>
+
+<h1 align="center">Finder Replace</h1>
+
+<p align="center">
+  <a href="https://github.com/mishamyrt/finder-replace/actions/workflows/qa.yml">
+      <img src="https://github.com/mishamyrt/finder-replace/actions/workflows/qa.yml/badge.svg" />
+  </a>
+  <a href="https://github.com/mishamyrt/finder-replace/releases/latest">
+    <img src="https://img.shields.io/github/v/tag/mishamyrt/finder-replace?label=version"
+  </a>
+</p>
 
 Open your preferred file manager when you click Finder in the Dock.
 A small utility for macOS 13+, with no system patches or SIP changes.
