@@ -1,15 +1,15 @@
 # Finder Replace
 
 Open your preferred file manager when you click Finder in the Dock.
-A small C utility for macOS 13+, with no Finder patches or SIP changes.
+A small utility for macOS 13+, with no system patches or SIP changes.
 
 Only plain left-clicks are replaced. Right-clicks and clicks with modifier keys
-keep their usual behavior. No app is selected by default.
+keep their usual behavior.
 
 ## Install and start
 
 Install with Homebrew, choose an app, and start the background service.
-For example, with Bloom:
+For example, with [Bloom](https://bloomapp.club):
 
 ```sh
 brew install mishamyrt/tap/finder-replace
@@ -41,7 +41,7 @@ If the event tap still fails, also check **Input Monitoring**.
 ## Change or disable the replacement
 
 Set `ApplicationPath` to the full path of another `.app`, then restart the service.
-Paths with spaces work; `~` is not expanded. Settings are read at startup.
+Paths with spaces work; `~` and `$HOME` is not expanded. Settings are read at startup.
 
 To clear the setting:
 
@@ -84,3 +84,7 @@ Press **Ctrl+C** to stop, then use `brew services start finder-replace` to resum
 background operation. Run only one copy at a time.
 
 For building, testing, and releases, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[MIT](./LICENSE)
