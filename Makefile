@@ -4,18 +4,23 @@ CC = clang
 CPPFLAGS += -DAPP_VERSION='"$(VERSION)"'
 CFLAGS = -std=c11 -Os -Wall -Wextra -Werror -mmacosx-version-min=13.0
 LDLIBS = -framework ApplicationServices -framework CoreServices -framework CoreFoundation
-BIN = build/finder-replace
+TARGET = build/finder-replace
 
-.PHONY: all test version publish clean
-all: $(BIN)
+all: $(TARGET)
 
-$(BIN): finder-replace.c Makefile
+$(TARGET): finder-replace.c Makefile
 	@mkdir -p build
 	$(CC) $(CPPFLAGS) $(CFLAGS) finder-replace.c $(LDLIBS) -o "$@"
 
-test: $(BIN) build/test
+.PHONY: fmt
+fmt:
+	find . \
+		\( -iname '*.h' -o -iname '*.c' \) \
+		| xargs clang-format -i
+
+test: $(TARGET) build/test
 	./build/test
-	test "$$($(BIN) --version)" = "$(VERSION)"
+	test "$$($(TARGET) --version)" = "$(VERSION)"
 
 build/test: test.c finder-replace.c Makefile
 	@mkdir -p build
