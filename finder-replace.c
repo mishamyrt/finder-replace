@@ -112,15 +112,46 @@ static bool finder_url(CFTypeRef value) {
     return match;
 }
 
+static CGPoint ax_screen_point(CGPoint point) {
+    CGDirectDisplayID displays[8];
+    uint32_t count = 0;
+    if (CGGetActiveDisplayList(8, displays, &count) != kCGErrorSuccess) {
+        return point;
+    }
+    CGPoint adjusted = point;
+    for (uint32_t i = 0; i < count; ++i) {
+        CGRect bounds = CGDisplayBounds(displays[i]);
+        if (!CGRectIsEmpty(bounds) && point.x >= CGRectGetMinX(bounds) &&
+            point.x <= CGRectGetMaxX(bounds) && point.y >= CGRectGetMinY(bounds) &&
+            point.y <= CGRectGetMaxY(bounds)) {
+            // Observed Dock AX items stop 5 points before the screen edge.
+            // ponytail: probe 8 points inward; use live item geometry if the gap
+            // grows.
+            adjusted.x = point.x >= CGRectGetMaxX(bounds) - 1
+                             ? CGRectGetMaxX(bounds) - 8
+                             : point.x;
+            adjusted.y = point.y >= CGRectGetMaxY(bounds) - 1
+                             ? CGRectGetMaxY(bounds) - 8
+                             : point.y;
+            // Prefer the containing screen over its neighbor at a shared edge.
+            if (CGRectContainsPoint(bounds, point)) {
+                return adjusted;
+            }
+        }
+    }
+    return adjusted;
+}
+
 static AXUIElementRef element_at(CGPoint point, uint64_t deadline) {
-    for (int attempt = 1; attempt <= 2 && ax_time_left(deadline); ++attempt) {
+    bool retried = false;
+    for (int attempt = 1; attempt <= 3 && ax_time_left(deadline); ++attempt) {
         AXUIElementRef element = NULL;
         AXError error =
             AXUIElementCopyElementAtPosition(system_ax, point.x, point.y, &element);
         if (debug) {
             fprintf(
                 stderr,
-                "hit-test (%.0f, %.0f), attempt=%d: error=%d\n",
+                "hit-test (%.6f, %.6f), attempt=%d: error=%d\n",
                 point.x,
                 point.y,
                 attempt,
@@ -135,9 +166,18 @@ static AXUIElementRef element_at(CGPoint point, uint64_t deadline) {
         }
         // A cold Dock can miss the first AX reply. Retry this read once, within
         // budget.
-        if (error != kAXErrorCannotComplete) {
-            break;
+        if (error == kAXErrorCannotComplete && !retried) {
+            retried = true;
+            continue;
         }
+        if (error == kAXErrorNoValue) {
+            CGPoint adjusted = ax_screen_point(point);
+            if (!CGPointEqualToPoint(point, adjusted)) {
+                point = adjusted;
+                continue;
+            }
+        }
+        break;
     }
     return NULL;
 }

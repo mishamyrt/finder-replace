@@ -27,10 +27,11 @@ brew services stop finder-replace
 Press **Ctrl+C** to stop. A rebuild may require granting Accessibility access
 again. Diagnostics go to stderr.
 
-Automated tests cover configuration, version output, AX retries and deadlines,
-Finder identification, and mouse-event pairing. They do not test live Dock clicks.
-After changing the hook, manually check the first click after a pause, repeated
-clicks, other Dock icons, modified/right-clicks, and Dock hiding or magnification.
+Automated tests cover configuration, version output, display edges, AX retries
+and deadlines, Finder identification, and mouse-event pairing. They do not test
+live Dock clicks. After changing the hook, manually check the first click after
+a pause, repeated clicks, screen-edge clicks, other Dock icons,
+modified/right-clicks, and Dock hiding or magnification.
 
 ## Code overview
 
@@ -43,6 +44,12 @@ clicks, other Dock icons, modified/right-clicks, and Dock hiding or magnificatio
 Keep the event callback bounded. AX requests have a 100 ms timeout within a
 250 ms search budget, with at most six ancestors checked. Hit-testing retries
 `kAXErrorCannotComplete` once; failures pass the click through.
+When AX returns `kAXErrorNoValue` in the last point at a bottom/right display
+edge, hit-testing probes eight points inside the edge to cross the observed
+five-point gap below Dock's AX items. This fallback shares the search budget
+and still requires a Dock item with Finder's URL. Successful original hits are
+unchanged; shared edges use the containing display. Debug output includes both
+coordinates without rounding them to integers.
 
 Finder is identified by its Dock process, AX role, and application URL, not its
 localized name. There is no polling or cached icon rectangle. A captured press
