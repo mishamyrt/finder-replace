@@ -65,7 +65,7 @@ it without building.
 [QA](.github/workflows/qa.yml) builds and tests Apple Silicon (`arm64`) and Intel
 (`x86_64`) binaries on branch pushes and pull requests. Pushing a tag matching
 `vX.Y.Z` runs the separate [release workflow](.github/workflows/release.yml),
-which builds, tests, and publishes both binaries. Only stable `X.Y.Z` versions
+which builds, tests, signs, and publishes both binaries. Only stable `X.Y.Z` versions
 are supported.
 
 ### One-time setup
@@ -74,6 +74,36 @@ Add the repository secret **`HOMEBREW_TAP_TOKEN`**: a fine-grained PAT for
 `mishamyrt/homebrew-tap` with **Contents: Read and write**. The token and branch
 rules must allow pushing to the tap's `main` branch. GitHub Releases use the
 built-in `GITHUB_TOKEN`.
+
+Release signing uses a self-signed code-signing certificate exported with its
+private key from Keychain Access:
+
+1. Open **Keychain Access → login → My Certificates** and find your code-signing
+   certificate. Expand it to check that its private key is present.
+2. Select the certificate and its private key, then choose **File → Export Items**.
+   Use **Personal Information Exchange (.p12)** and save it outside the repository,
+   for example as `~/Desktop/finder-replace-signing.p12`. A `.cer` export does not
+   contain the private key and cannot sign binaries.
+3. Set a strong export password and confirm access to the keychain when prompted.
+   See Apple's [Keychain Access export instructions](https://support.apple.com/guide/keychain-access/kyca35961/mac).
+4. In this repository's **Settings → Secrets and variables → Actions**, add these
+   repository secrets:
+
+   | Secret | Value |
+   | --- | --- |
+   | `FINDER_REPLACE_SIGNING_CERTIFICATE` | Base64-encoded contents of the `.p12` file |
+   | `FINDER_REPLACE_SIGNING_CERTIFICATE_PASSWORD` | The export password from step 3 |
+
+   Copy the certificate value on macOS with:
+
+   ```sh
+   base64 -i "$HOME/Desktop/finder-replace-signing.p12" | pbcopy
+   ```
+
+The workflow signs both architectures with identifier `co.myrt.finder-replace`,
+disables timestamping, and verifies the signature before packaging. Keep using
+the same certificate for subsequent releases. Store the `.p12` and its password
+securely; do not commit them.
 
 ### Publish
 
@@ -97,4 +127,4 @@ the service definition for `brew services`.
 
 Reruns reuse existing release files and calculate formula checksums from those
 files. If the tap update fails, fix access and rerun the failed job.
-Release binaries are not Developer ID signed or notarized.
+Release binaries are self-signed, not Developer ID signed or notarized.
